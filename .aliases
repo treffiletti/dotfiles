@@ -1,0 +1,36 @@
+# echo "Loading .aliases from $HOME"
+# Set personal aliases, overriding those provided by oh-my-zsh libs,
+# plugins, and themes. Aliases can be placed here, though oh-my-zsh
+# users are encouraged to define aliases within the ZSH_CUSTOM folder.
+# For a full list of active aliases, run `alias`.
+#
+
+alias zc="code ~/.zshrc"
+alias ohmyzsh="mate ~/.oh-my-zsh"
+alias desk="cd ~/Desktop"
+alias dl="cd ~/Downloads"
+alias rel="source ~/.zshrc"
+alias gig="code .gitignore"
+alias npmrs="npm run start"
+alias npmrsl="npm run start:localhost"
+
+# pnpm aliases
+alias pdev="pnpm run dev"
+
+# npm aliases
+alias ngend="./node_modules/.bin/ngen"
+alias nxbin="./node_modules/.bin/nx"
+alias sites="cd ~/Sites"
+alias npmrd="npm run dev"
+alias npmrsd="npm run start:dev"
+alias npmrw="npm run watch"
+alias npmrdb="npm run debug"
+alias nirs="npm install && npm run start"
+alias konkprox="konkat policies && konkat proxies && konkat resources && konkat targets"
+alias dsrem="find . -name '.DS_Store' -type f -delete"
+
+alias chromedebug="cd ~/Sites && /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --remote-debugging-port=9222 > nohup.out "
+
+# AI
+alias chat-search="chatgpt-history search"
+alias chat-canvas="chatgpt-history canvas"

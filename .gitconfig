@@ -1,0 +1,41 @@
+# This is Git's per-user configuration file.
+# Core variables
+[core]
+	; Don't trust file modes
+	filemode = false
+	editor = code --wait
+	excludesfile = /Users/nicholastreffiletti/.gitignore_global
+	pager = cat
+[diff]
+	; external = /usr/local/bin/diff-wrapper
+	renames = true
+	tool = vscode
+[user]
+	name = Tref
+	email = nick@treflabs.com
+	# Please adapt and uncomment the following lines:
+	; name = nicholasanthony
+	; email = nick@treflabs.com
+[init]
+	defaultBranch = main
+
+# [includeIf "gitdir:~/Sites/TandymCode/**"]
+# 	path = /Users/nicholastreffiletti/Sites/TandymCode/gitconfig_include
+[filter "lfs"]
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+	clean = git-lfs clean -- %f
+[pager]
+	branch = false
+[pull]
+	rebase = false
+[push]
+	default = current
+	autoSetupRemote = true
+[difftool "vscode"]
+	cmd = "code --wait --diff  "
+[alias]
+	delete-merged = !git branch | grep -v \"^\\*\" | xargs git branch -D
+[checkout]
+	defaultRemote = origin

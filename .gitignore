@@ -1,0 +1,13 @@
+# Secrets - NEVER commit these
+.env.local
+*.local
+
+# But DO track .env (public config only)
+!.env
+
+# OS files
+.DS_Store
+
+# Backup files
+*.bak
+*~

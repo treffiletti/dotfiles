@@ -1,0 +1,273 @@
+# echo "Loading .functions from $HOME"
+# Set personal aliases, overriding those provided by oh-my-zsh libs,
+# plugins, and themes. Aliases can be placed here, though oh-my-zsh
+# users are encouraged to define aliases within the ZSH_CUSTOM folder.
+# For a full list of active aliases, run `alias`.
+#
+gcpu() {
+  git add . && git commit -m $1 && git push
+}
+
+claude() {
+  if [ -f .ai/claude.md ]; then
+    command claude "$(cat .ai/claude.md)
+
+USER REQUEST:
+$*"
+  else
+    command claude "$@"
+  fi
+}
+
+konkat() {
+  # Check if a path argument is provided
+  if [ -z "$1" ]; then
+    echo "Usage: konkat <path>"
+    return 1
+  fi
+
+  # Get the provided path
+  local input_path="$1"
+
+  # Ensure the input path is absolute
+  if [[ "$input_path" != /* ]]; then
+    input_path="$(pwd)/$input_path"
+  fi
+
+  echo "Absolute input path: $input_path"
+
+  # Extract the directory name from the provided path
+  local dir_name=$(basename "$input_path")
+  echo "DIR_NAME: $dir_name"
+
+  # Define the output file
+  local output_file="${dir_name}_concatenated_files.txt"
+
+  # Clear the output file if it exists
+  truncate -s 0 "$output_file"
+
+  echo "Finding all files recursively in the specified directory..."
+
+  # Use find with multiple -name options to search for different file types
+  find "$input_path" -type f \( -name "*.ts" -o -name "*.properties" -o -name "*.xml" -o -name "*.js" -o -name "*.json" -o -name "*.yaml" -o -name "*.go" -o -name "dockerfile" -o -name "*.yml" -o -name "*.html" -o -name "*.txt" -o -name "*.py" -o -name "*.sh" \) -print0 | while IFS= read -r -d '' file; do
+    # Print filename and path to output file
+    echo "### File: $file" >>"$output_file"
+    echo "" >>"$output_file"
+    # Concatenate file content to output file
+    cat "$file" >>"$output_file"
+    echo "" >>"$output_file"
+  done
+
+  echo "Concatenation completed. Output saved to $output_file."
+}
+
+
+# --- ShellGPT helpers for zsh ---
+# Explain current buffer (or last command). Opens pager outside ZLE.
+_ai_explain() {
+  local cmd="${BUFFER:-$(fc -ln -1)}"
+  [[ -z "$cmd" ]] && { zle -M "No command to explain."; return 1; }
+  zle -I
+  sgpt --explain -- "$cmd" </dev/null | less -R
+  zle redisplay
+}
+zle -N ai-explain _ai_explain
+bindkey '^[/' ai-explain      # Alt-/
+
+# Suggest a command from natural language and insert it into the line (does NOT run it)
+# ~/.zshrc
+# Suggest a command from natural language and insert it into the line (does NOT run it)
+_ai_suggest() {
+  local ask out
+  if [[ -n "$BUFFER" ]]; then
+    ask="$BUFFER"
+  else
+    zle -I
+    printf "Describe the command you want: " > /dev/tty
+    read -r ask < /dev/tty || { zle -M "Cancelled."; return 1; }
+  fi
+
+  zle -I
+  # Preferred: non-interactive suggestion (no E/D/A prompt)
+  out="$(SGPT_NO_EDITOR=1 sgpt --shell --no-interaction "$ask" </dev/null 2>/dev/null)"
+
+  # Fallback for older shell-gpt that lacks --no-interaction:
+  if [[ -z "$out" ]]; then
+    out="$(
+      { printf 'A\n' | sgpt --shell "$ask"; } 2>/dev/null | sed -n '1p'
+    )"
+  fi
+
+  if [[ -n "$out" ]]; then
+    BUFFER="$out"
+    CURSOR=${#BUFFER}
+    zle redisplay
+  else
+    zle -M "No suggestion."
+  fi
+}
+zle -N ai-suggest _ai_suggest
+bindkey '^G' ai-suggest
+
+
+
+ai-anthropic() {
+    # Check if API key is set
+    if [ -z "$ANTHROPIC_API_KEY" ]; then
+        echo "Error: Please set ANTHROPIC_API_KEY environment variable"
+        echo "Run: export ANTHROPIC_API_KEY='your-api-key-here'"
+        return 1
+    fi
+    
+    # Check if jq is installed
+    if ! command -v jq &> /dev/null; then
+        echo "Installing jq for JSON parsing..."
+        brew install jq
+    fi
+    
+    # Get the user's request
+    local request="$*"
+    
+    # Create the API request
+    local response=$(curl -s https://api.anthropic.com/v1/messages \
+        -H "content-type: application/json" \
+        -H "x-api-key: $ANTHROPIC_API_KEY" \
+        -H "anthropic-version: 2023-06-01" \
+        -d @- <<EOF
+{
+    "model": "claude-3-5-sonnet-20241022",
+    "max_tokens": 500,
+    "messages": [{
+        "role": "user",
+        "content": "Generate only the shell command for this request, no explanation: $request"
+    }],
+    "system": "You are a command line helper. Output ONLY the exact command to run, no explanation, no markdown, no backticks. If multiple commands are needed, separate with && or semicolons."
+}
+EOF
+    )
+    
+    # Check for API errors
+    if echo "$response" | jq -e '.error' > /dev/null 2>&1; then
+        echo "API Error: $(echo "$response" | jq -r '.error.message')"
+        return 1
+    fi
+    
+    # Extract the command from the response
+    local command=$(echo "$response" | jq -r '.content[0].text' 2>/dev/null)
+    
+    if [ -z "$command" ] || [ "$command" = "null" ]; then
+        echo "Error: Could not parse response"
+        return 1
+    fi
+    
+    # Display the command with color
+    print -P "%F{cyan}→ Command:%f $command"
+    echo ""
+    
+    # Ask if user wants to run it
+    echo -n "Run this command? (y/n/e to edit): "
+    read -k 1 REPLY
+    echo ""
+    
+    case $REPLY in
+        y|Y)
+            eval "$command"
+            ;;
+        e|E)
+            # Use zsh's vared for editing
+            local edited_command="$command"
+            vared edited_command
+            eval "$edited_command"
+            ;;
+        *)
+            echo "Cancelled"
+            ;;
+    esac
+}
+
+
+ai() {
+    # Check if API key is set
+    if [ -z "$OPENAI_API_KEY" ]; then
+        echo "Error: Please set OPENAI_API_KEY environment variable"
+        echo "Run: export OPENAI_API_KEY='your-api-key-here'"
+        return 1
+    fi
+    
+    # Check if jq is installed
+    if ! command -v jq &> /dev/null; then
+        echo "Installing jq for JSON parsing..."
+        brew install jq
+    fi
+    
+    # Get the user's request
+    local request="$*"
+    
+    # Get current directory context (top-level items only)
+    local dir_context=$(ls -la | head -20)
+    local pwd_context=$(pwd)
+    
+    # Create the API request for OpenAI with context
+    local response=$(curl -s https://api.openai.com/v1/chat/completions \
+        -H "Content-Type: application/json" \
+        -H "Authorization: Bearer $OPENAI_API_KEY" \
+        -d @- <<EOF
+{
+    "model": "gpt-4o-mini",
+    "messages": [
+        {
+            "role": "system",
+            "content": "You are a command line helper. Output ONLY the exact shell command to run, no explanation, no markdown, no backticks. The user is in directory: $pwd_context\n\nDirectory contents:\n$dir_context"
+        },
+        {
+            "role": "user",
+            "content": "Generate only the shell command for this request: $request"
+        }
+    ],
+    "temperature": 0.3,
+    "max_tokens": 500
+}
+EOF
+    )
+    
+    # Check for API errors
+    if echo "$response" | jq -e '.error' > /dev/null 2>&1; then
+        echo "API Error: $(echo "$response" | jq -r '.error.message')"
+        return 1
+    fi
+    
+    # Extract the command from the response
+    local command=$(echo "$response" | jq -r '.choices[0].message.content' 2>/dev/null)
+    
+    if [ -z "$command" ] || [ "$command" = "null" ]; then
+        echo "Error: Could not parse response"
+        return 1
+    fi
+    
+    # Clean up the command (remove any backticks if they slip through)
+    command=$(echo "$command" | sed 's/^```.*//g' | sed 's/```$//g' | tr -d '`')
+    
+    # Display the command with color
+    print -P "%F{cyan}→ Command:%f $command"
+    echo ""
+    
+    # Ask if user wants to run it
+    echo -n "Run this command? (y/n/e to edit): "
+    read -k 1 REPLY
+    echo ""
+    
+    case $REPLY in
+        y|Y)
+            eval "$command"
+            ;;
+        e|E)
+            # Use zsh's vared for editing
+            local edited_command="$command"
+            vared edited_command
+            eval "$edited_command"
+            ;;
+        *)
+            echo "Cancelled"
+            ;;
+    esac
+}
