@@ -51,10 +51,41 @@ if [ -d "$DOTFILES_DIR/fish" ]; then
     ln -sf "$DOTFILES_DIR/fish" "$HOME/.config/fish"
 fi
 
-# Source .zshrc if in zsh
-if [ -n "$ZSH_VERSION" ]; then
-    echo "Sourcing .zshrc"
-    source "$HOME/.zshrc"
+# Install Fish shell
+echo ""
+echo "==> Setting up Fish shell..."
+FISH_PATH=/opt/homebrew/bin/fish
+
+if ! command -v fish &>/dev/null; then
+    echo "Installing Fish via Homebrew..."
+    brew install fish
+fi
+
+# Add Fish to /etc/shells if not already present
+if ! grep -qxF "$FISH_PATH" /etc/shells; then
+    echo "Adding Fish to /etc/shells (requires sudo)..."
+    echo "$FISH_PATH" | sudo tee -a /etc/shells
+fi
+
+# Set Fish as default shell if not already
+if [ "$SHELL" != "$FISH_PATH" ]; then
+    echo "Setting Fish as default shell..."
+    chsh -s "$FISH_PATH"
+fi
+
+# Install Fisher and plugins
+echo "Installing Fisher plugins..."
+fish -c "
+    if not functions -q fisher
+        curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source
+    end
+    fisher update
+"
+
+# Install Node LTS via nvm.fish if node isn't available
+if ! fish -c "command -q node" &>/dev/null; then
+    echo "Installing Node LTS via nvm.fish..."
+    fish -c "nvm install lts"
 fi
 
 echo ""
@@ -64,7 +95,4 @@ echo ""
 echo "IMPORTANT: Create a .env.local file in $DOTFILES_DIR with your secrets!"
 echo "See .env.local.example for template"
 echo ""
-echo "Fish shell next steps:"
-echo "  1. Run: fisher update    (installs plugins from fish_plugins)"
-echo "  2. Run: nvm install lts  (installs Node via nvm.fish)"
-echo "  3. Run: tide configure   (sets up the Tide prompt theme)"
+echo "Open Warp (or a new terminal) and run: tide configure"
