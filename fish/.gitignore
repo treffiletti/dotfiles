@@ -1,0 +1,39 @@
+# Fisher plugin files - plugins are tracked via fish_plugins, not their source files
+# Re-install with: fisher update
+
+# Fish universal variables (machine-specific)
+fish_variables
+
+# Fisher itself
+functions/fisher.fish
+completions/fisher.fish
+
+# Tide prompt theme
+functions/tide
+functions/tide.fish
+functions/_tide*.fish
+functions/tide_*.fish
+functions/fish_mode_prompt.fish
+functions/fish_prompt.fish
+conf.d/_tide*.fish
+completions/tide.fish
+
+# nvm.fish
+functions/nvm.fish
+functions/_nvm*.fish
+conf.d/nvm.fish
+completions/nvm.fish
+
+# bass
+functions/bass.fish
+functions/__bass.py
+
+# z (directory jumping)
+functions/__z.fish
+functions/__z_*.fish
+functions/z.fish
+conf.d/z.fish
+completions/z.fish
+
+# Fish-managed completions (unless explicitly added)
+completions/

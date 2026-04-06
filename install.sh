@@ -36,6 +36,21 @@ for file in $files; do
     fi
 done
 
+# Fish config directory
+if [ -d "$DOTFILES_DIR/fish" ]; then
+    mkdir -p "$HOME/.config"
+    if [ -d "$HOME/.config/fish" ] && [ ! -L "$HOME/.config/fish" ]; then
+        echo "Backing up existing Fish config"
+        mv "$HOME/.config/fish" "$BACKUP_DIR/fish"
+    fi
+    if [ -L "$HOME/.config/fish" ]; then
+        echo "Removing old Fish config symlink"
+        rm "$HOME/.config/fish"
+    fi
+    echo "Creating symlink for Fish config directory"
+    ln -sf "$DOTFILES_DIR/fish" "$HOME/.config/fish"
+fi
+
 # Source .zshrc if in zsh
 if [ -n "$ZSH_VERSION" ]; then
     echo "Sourcing .zshrc"
@@ -48,3 +63,8 @@ echo "Your old dotfiles have been backed up to $BACKUP_DIR"
 echo ""
 echo "IMPORTANT: Create a .env.local file in $DOTFILES_DIR with your secrets!"
 echo "See .env.local.example for template"
+echo ""
+echo "Fish shell next steps:"
+echo "  1. Run: fisher update    (installs plugins from fish_plugins)"
+echo "  2. Run: nvm install lts  (installs Node via nvm.fish)"
+echo "  3. Run: tide configure   (sets up the Tide prompt theme)"
