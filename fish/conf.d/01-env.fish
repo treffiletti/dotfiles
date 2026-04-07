@@ -17,7 +17,4 @@ if command -q bass
     end
 end
 
-# Graphite CLI completions
-if command -q gt
-    gt completion fish | source
-end
+# Note: Graphite (gt) does not support Fish completions
