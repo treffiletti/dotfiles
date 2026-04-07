@@ -35,5 +35,21 @@ functions/z.fish
 conf.d/z.fish
 completions/z.fish
 
+# plugin-git (jhillyerd/plugin-git)
+functions/__git.*.fish
+functions/gbage.fish
+functions/gbda.fish
+functions/gdv.fish
+functions/gignored.fish
+functions/glp.fish
+functions/grel.fish
+functions/grename.fish
+functions/grt.fish
+functions/gtest.fish
+functions/gtl.fish
+functions/gunwip.fish
+functions/gwip.fish
+conf.d/git.fish
+
 # Fish-managed completions (unless explicitly added)
 completions/

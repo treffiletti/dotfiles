@@ -36,6 +36,21 @@ for file in $files; do
     fi
 done
 
+# Ghostty config directory
+if [ -d "$DOTFILES_DIR/ghostty" ]; then
+    mkdir -p "$HOME/.config"
+    if [ -d "$HOME/.config/ghostty" ] && [ ! -L "$HOME/.config/ghostty" ]; then
+        echo "Backing up existing Ghostty config"
+        mv "$HOME/.config/ghostty" "$BACKUP_DIR/ghostty"
+    fi
+    if [ -L "$HOME/.config/ghostty" ]; then
+        echo "Removing old Ghostty config symlink"
+        rm "$HOME/.config/ghostty"
+    fi
+    echo "Creating symlink for Ghostty config directory"
+    ln -sf "$DOTFILES_DIR/ghostty" "$HOME/.config/ghostty"
+fi
+
 # Fish config directory
 if [ -d "$DOTFILES_DIR/fish" ]; then
     mkdir -p "$HOME/.config"
